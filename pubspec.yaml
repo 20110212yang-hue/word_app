@@ -1,26 +1,36 @@
-name: word_app
-description: "Swedish vocabulary app with translation API"
-publish_to: 'none'
+name: Build Android APK
 
-version: 1.0.0+1
+on:
+  push:
+    branches: [ main ]
 
-environment:
-  sdk: ">=3.0.0 <4.0.0"
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-dependencies:
-  flutter:
-    sdk: flutter
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-  cupertino_icons: ^1.0.8
-  sqflite: ^2.4.2
-  path: ^1.9.1
-  http: ^1.2.2
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.19.6'
+          channel: 'stable'
 
-dev_dependencies:
-  flutter_test:
-    sdk: flutter
+      - name: Install dependencies
+        run: flutter pub get
 
-  flutter_lints: ^6.0.0
+      - name: Build APK
+        run: flutter build apk --release
 
-flutter:
-  uses-material-design: true
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: build/app/outputs/flutter-apk/app-release.apk
