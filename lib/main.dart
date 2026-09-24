@@ -123,7 +123,6 @@ class _WordMainPageState extends State<WordMainPage> {
     _loadWordList();
   }
 
-  // DB에서 저장된 단어장 목록 불러오기
   Future<void> _loadWordList() async {
     final list = await DatabaseHelper.instance.getAllWords();
     setState(() {
@@ -131,7 +130,6 @@ class _WordMainPageState extends State<WordMainPage> {
     });
   }
 
-  // 안드로이드 바탕화면 위젯 업데이트
   Future<void> _updateWidget(String word, String meaning) async {
     await HomeWidget.saveWidgetData<String>('widget_word', word);
     await HomeWidget.saveWidgetData<String>('widget_meaning', meaning);
@@ -141,7 +139,6 @@ class _WordMainPageState extends State<WordMainPage> {
     );
   }
 
-  // 구글 번역 API 호출 및 DB 저장
   Future<void> _translateAndSave() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -163,15 +160,11 @@ class _WordMainPageState extends State<WordMainPage> {
           _translatedText = result;
         });
 
-        // 1) sqflite DB에 저장
         await DatabaseHelper.instance.insertWord(
           WordItem(word: text, meaning: result),
         );
 
-        // 2) 바탕화면 위젯 업데이트
         await _updateWidget(text, result);
-
-        // 3) 단어장 목록 업데이트
         await _loadWordList();
 
         _controller.clear();
@@ -187,7 +180,6 @@ class _WordMainPageState extends State<WordMainPage> {
     }
   }
 
-  // 단어 삭제
   Future<void> _deleteWord(int id) async {
     await DatabaseHelper.instance.deleteWord(id);
     await _loadWordList();
@@ -204,9 +196,8 @@ class _WordMainPageState extends State<WordMainPage> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 번역 및 저장 입력 영역
             const Text(
               '스웨덴어 단어 번역 & 단어장 저장',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -242,8 +233,6 @@ class _WordMainPageState extends State<WordMainPage> {
               ],
             ),
             const SizedBox(height: 16),
-
-            // 번역 결과 영역
             if (_translatedText.isNotEmpty) ...[
               Container(
                 width: double.infinity,
@@ -270,10 +259,7 @@ class _WordMainPageState extends State<WordMainPage> {
               ),
               const SizedBox(height: 16),
             ],
-
             const Divider(height: 32),
-
-            // sqflite 단어장 목록
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -289,7 +275,6 @@ class _WordMainPageState extends State<WordMainPage> {
               ],
             ),
             const SizedBox(height: 8),
-
             _wordList.isEmpty
                 ? const Center(
                     child: Padding(
