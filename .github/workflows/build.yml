@@ -23,8 +23,10 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
 
-      - name: Repair Android Project
-        run: flutter create . --platforms=android
+      - name: Repair Android Project & Add Internet Permission
+        run: |
+          flutter create . --platforms=android
+          sed -i '/<manifest/a \    <uses-permission android:name="android.permission.INTERNET"/>' android/app/src/main/AndroidManifest.xml
 
       - name: Install dependencies
         run: flutter pub get
