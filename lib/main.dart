@@ -49,40 +49,35 @@ class TranslationResult {
 }
 
 class TranslationApiService {
-  static const _baseUrl = 'https://api.mymemory.translated.net/get';
+  static Future<String> _translate(String text, String targetLang) async {
+    if (text.trim().isEmpty) return '';
 
-  static Future<String> _translate(String text, String langPair) async {
-    final uri = Uri.parse(_baseUrl).replace(
-      queryParameters: {
-        'q': text,
-        'langpair': langPair,
-      },
-    );
+    try {
+      final url = Uri.parse(
+        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=$targetLang&dt=t&q=${Uri.encodeComponent(text)}',
+      );
 
-    final response = await http.get(uri).timeout(
-      const Duration(seconds: 10),
-    );
+      final response = await http.get(url).timeout(
+        const Duration(seconds: 10),
+      );
 
-    if (response.statusCode != 200) {
-      throw Exception('서버 오류 (${response.statusCode})');
+      if (response.statusCode == 200) {
+        final List<dynamic> data = jsonDecode(response.body);
+        if (data.isNotEmpty && data[0] != null) {
+          StringBuffer translated = StringBuffer();
+          for (var item in data[0]) {
+            if (item[0] != null) {
+              translated.write(item[0]);
+            }
+          }
+          final result = translated.toString().trim();
+          if (result.isNotEmpty) return result;
+        }
+      }
+      throw Exception('번역 실패');
+    } catch (e) {
+      throw Exception('번역 오류가 발생했습니다.');
     }
-
-    final data = jsonDecode(response.body) as Map<String, dynamic>;
-    final status = data['responseStatus'] as int? ?? 0;
-
-    if (status != 200) {
-      throw Exception('번역 결과를 찾을 수 없습니다.');
-    }
-
-    final responseData = data['responseData'] as Map<String, dynamic>?;
-    final translatedText =
-        responseData?['translatedText'] as String? ?? '';
-
-    if (translatedText.isEmpty) {
-      throw Exception('번역 결과가 비어 있습니다.');
-    }
-
-    return translatedText.trim();
   }
 
   static Future<TranslationResult> translate(
@@ -91,14 +86,14 @@ class TranslationApiService {
   ) async {
     switch (sourceLanguage) {
       case SearchLanguage.korean:
-        final swedish = await _translate(query, 'ko|sv');
+        final swedish = await _translate(query, 'sv');
         return TranslationResult(
           word: swedish,
           meaning: query,
           sourceLanguage: SearchLanguage.korean,
         );
       case SearchLanguage.swedish:
-        final korean = await _translate(query, 'sv|ko');
+        final korean = await _translate(query, 'ko');
         return TranslationResult(
           word: query,
           meaning: korean,
