@@ -23,6 +23,9 @@ jobs:
           flutter-version: '3.19.6'
           channel: 'stable'
 
+      - name: Repair Android Project
+        run: flutter create . --platforms=android
+
       - name: Install dependencies
         run: flutter pub get
 
