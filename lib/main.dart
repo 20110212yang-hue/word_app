@@ -17,7 +17,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: '스웨덴어 단어장',
+      title: '한국어-스웨덴어 단어장',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -27,11 +27,10 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// 1. 단어 데이터 모델
 class WordItem {
   final int? id;
-  final String word;
-  final String meaning;
+  final String word; // 한국어
+  final String meaning; // 스웨덴어
 
   WordItem({this.id, required this.word, required this.meaning});
 
@@ -52,7 +51,6 @@ class WordItem {
   }
 }
 
-// 2. sqflite 로컬 데이터베이스 헬퍼
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
   static Database? _database;
@@ -103,7 +101,6 @@ class DatabaseHelper {
   }
 }
 
-// 3. 메인 화면 (번역 + 단어장 + 위젯)
 class WordMainPage extends StatefulWidget {
   const WordMainPage({super.key});
 
@@ -130,15 +127,17 @@ class _WordMainPageState extends State<WordMainPage> {
     });
   }
 
-  Future<void> _updateWidget(String word, String meaning) async {
-    await HomeWidget.saveWidgetData<String>('widget_word', word);
-    await HomeWidget.saveWidgetData<String>('widget_meaning', meaning);
+  // 바탕화면 위젯 업데이트 (위젯 메인에 스웨덴어 표시)
+  Future<void> _updateWidget(String korean, String swedish) async {
+    await HomeWidget.saveWidgetData<String>('widget_word', swedish);
+    await HomeWidget.saveWidgetData<String>('widget_meaning', korean);
     await HomeWidget.updateWidget(
       name: 'WordWidgetProvider',
       androidName: 'WordWidgetProvider',
     );
   }
 
+  // 한국어 -> 스웨덴어 번역 (sl=ko&tl=sv)
   Future<void> _translateAndSave() async {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
@@ -148,7 +147,7 @@ class _WordMainPageState extends State<WordMainPage> {
     });
 
     final url = Uri.parse(
-        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=sv&tl=ko&dt=t&q=${Uri.encodeComponent(text)}');
+        'https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=sv&dt=t&q=${Uri.encodeComponent(text)}');
 
     try {
       final response = await http.get(url);
@@ -189,7 +188,7 @@ class _WordMainPageState extends State<WordMainPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('스웨덴어 단어장 & 번역기'),
+        title: const Text('한국어 ➔ 스웨덴어 번역기 & 위젯'),
         centerTitle: true,
         backgroundColor: Colors.blue.shade100,
       ),
@@ -199,7 +198,7 @@ class _WordMainPageState extends State<WordMainPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              '스웨덴어 단어 번역 & 단어장 저장',
+              '한국어 입력 (위젯에 스웨덴어로 표시)',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
@@ -209,7 +208,7 @@ class _WordMainPageState extends State<WordMainPage> {
                   child: TextField(
                     controller: _controller,
                     decoration: const InputDecoration(
-                      hintText: '스웨덴어 단어 입력 (예: Hej, Tack)',
+                      hintText: '한국어 단어/문장 입력 (예: 안녕하세요)',
                       border: OutlineInputBorder(),
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                     ),
@@ -244,13 +243,13 @@ class _WordMainPageState extends State<WordMainPage> {
                 ),
                 child: Column(
                   children: [
-                    const Text('최근 번역 결과 (위젯에 등록됨)',
+                    const Text('스웨덴어 번역 결과 (위젯 적용 완료)',
                         style: TextStyle(color: Colors.grey, fontSize: 12)),
                     const SizedBox(height: 4),
                     Text(
                       _translatedText,
                       style: const TextStyle(
-                          fontSize: 20,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           color: Colors.blue),
                     ),
@@ -264,13 +263,13 @@ class _WordMainPageState extends State<WordMainPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  '내 단어장 목록 (${_wordList.length}개)',
+                  '저장된 단어장 (${_wordList.length}개)',
                   style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
                 IconButton(
                   icon: const Icon(Icons.refresh),
                   onPressed: _loadWordList,
-                  tooltip: '목록 새로고침',
+                  tooltip: '새로고침',
                 ),
               ],
             ),
@@ -279,7 +278,7 @@ class _WordMainPageState extends State<WordMainPage> {
                 ? const Center(
                     child: Padding(
                       padding: EdgeInsets.all(32.0),
-                      child: Text('저장된 단어가 없습니다.\n위에서 단어를 입력하여 저장해 보세요!',
+                      child: Text('저장된 단어가 없습니다.\n위에서 한국어를 입력하면 스웨덴어로 번역됩니다!',
                           textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey)),
                     ),
@@ -294,13 +293,13 @@ class _WordMainPageState extends State<WordMainPage> {
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ListTile(
                           title: Text(
-                            item.word,
+                            item.meaning, // 스웨덴어
                             style: const TextStyle(
                                 fontSize: 18, fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(
-                            item.meaning,
-                            style: const TextStyle(fontSize: 16, color: Colors.black87),
+                            item.word, // 한국어
+                            style: const TextStyle(fontSize: 15, color: Colors.black54),
                           ),
                           trailing: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -312,7 +311,7 @@ class _WordMainPageState extends State<WordMainPage> {
                                   await _updateWidget(item.word, item.meaning);
                                   if (mounted) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(content: Text('\'${item.word}\' 단어가 바탕화면 위젯에 설정되었습니다.')),
+                                      SnackBar(content: Text('\'${item.meaning}\' 단어가 바탕화면 위젯에 설정되었습니다.')),
                                     );
                                   }
                                 },
